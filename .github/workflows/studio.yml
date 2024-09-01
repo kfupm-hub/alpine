@@ -5,8 +5,7 @@ run-name: studio nuxt build
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches:
-      - 'main'
+    branches: ["main"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -26,7 +25,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: .
+        working-directory: .starters/default
 
     strategy:
       matrix:
@@ -40,12 +39,12 @@ jobs:
       - name: Identify package manager
         id: pkgman
         run: |
-          cache=`[ -f "./pnpm-lock.yaml" ] && echo "pnpm" || ([ -f "./package-lock.json" ] && echo "npm" || ([ -f "./yarn.lock" ] && echo "yarn" || echo ""))`
+          cache=`[ -f ".starters/default/pnpm-lock.yaml" ] && echo "pnpm" || ([ -f ".starters/default/package-lock.json" ] && echo "npm" || ([ -f ".starters/default/yarn.lock" ] && echo "yarn" || echo ""))`
           package_manager=`[ ! -z "$cache" ] && echo "$cache" || echo "pnpm"`
           echo "cache=$cache" >> $GITHUB_OUTPUT
           echo "package_manager=$package_manager" >> $GITHUB_OUTPUT
 
-      - uses: pnpm/action-setup@v2.4.0
+      - uses: pnpm/action-setup@v2.2.4
         if: ${{ steps.pkgman.outputs.package_manager == 'pnpm' }}
         name: Install pnpm
         id: pnpm-install
@@ -64,14 +63,13 @@ jobs:
         run: ${{ steps.pkgman.outputs.package_manager }} add -D @nuxthq/studio
 
       - name: Create .nuxtrc
-        run: echo $'\nautoImport=true\nmodules[]=@nuxthq/studio' >> .nuxtrc
+        run: echo 'modules[]=@nuxthq/studio' > .nuxtrc
 
       - name: Generate
-        run: npx nuxi generate
+        run: ${{ steps.pkgman.outputs.package_manager }} nuxi generate
         env:
           NUXT_PUBLIC_STUDIO_API_URL: https://api.nuxt.studio
-          NUXT_PUBLIC_STUDIO_TOKENS: 55552993073da0acf3d567b855298a15341716c3cb38e3e08324816b70807ca2
-
+          NUXT_PUBLIC_STUDIO_TOKENS: df0f47329024fc56b11978936e0e8ac1b0213ac82e47a9a1584cb5b8da096da4
 
       - name: Add .nojekyll file
         run: touch .output/public/.nojekyll
@@ -80,4 +78,4 @@ jobs:
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: ./.output/public
+          folder: .starters/default/.output/public
